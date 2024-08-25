@@ -1,12 +1,20 @@
 const cardObjectDefinition = [
     {id: 1, imagePath: 'images/king_of_hearts2.png'},
-    {id: 2, imagePath: 'images/queen_of_diamons2.png'},
+    {id: 2, imagePath: 'images/queen_of_diamonds2.png'},
     {id: 3, imagePath: 'images/jack_of_clubs2.png'},
     {id: 4, imagePath: 'images/ace_of_spades2.png'}
 ]
 
 const cardBackImgPath = 'images/0_blue_back.png'
 const cardContainerElem = document.querySelector('.card-container')
+
+createCards()
+
+function createCards(){
+    cardObjectDefinition.forEach((cardItem) => {
+        createCard(cardItem)
+    })
+}
 
 function createCard(cardItem){
     // create div elements that make up a card
@@ -27,16 +35,16 @@ function createCard(cardItem){
     addClassToElement(cardInnerElem, 'card-inner')
 
     // add class to front card element
-    addClassToElement(cardFrontElem, 'card-inner')
+    addClassToElement(cardFrontElem, 'card-front')
     
     // add class to back card element
-    addClassToElement(cardBackElem, 'card-inner')
+    addClassToElement(cardBackElem, 'card-back')
 
     // add src attribute and appropriate value to img element - back of card
-    addSrcToImageElem(cardBackElem, cardBackImgPath)
+    addSrcToImageElem(cardBackImg, cardBackImgPath)
 
     // add src attribute and appropriate value to img element - front of card
-    addSrcToImageElem(cardFrontElem, cardItem.imagePath)
+    addSrcToImageElem(cardFrontImg, cardItem.imagePath)
 
     // assign class to back image element of back of card
     addClassToElement(cardBackImg, 'card-img')
@@ -60,6 +68,7 @@ function createCard(cardItem){
     addChildElement(cardElem, cardInnerElem)
 
     // add card element as child element to appropriate grid cell
+    addCardToGridCell(cardElem)
 }
 
 function createElement(elemType){
@@ -83,7 +92,24 @@ function addChildElement(parentElem, childElem){
 }
 
 function addCardToGridCell(card){
+    const cardPositionClassName = mapCardIdToGridCell(card)
 
+    const cardPosElem = document.querySelector(cardPositionClassName)
+
+    addChildElement(cardPosElem, card)
 }
 
-
+function mapCardIdToGridCell(card){
+    if(card.id == 1){
+        return '.card-pos-a'
+    }
+    if(card.id == 2){
+        return '.card-pos-b'
+    }
+    if(card.id == 3){
+        return '.card-pos-c'
+    }
+    if(card.id == 4){
+        return '.card-pos-d'
+    }
+}
