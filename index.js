@@ -34,7 +34,7 @@ function initializeNewGame(){
 function startRound(){
     initializeNewRound()
     collectCards()
-    //flipCards(true)
+    flipCards(true)
     shuffleCards()
 }
 
