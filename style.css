@@ -38,34 +38,29 @@ main{
     grid-template-rows: 1fr 1fr;
     grid-template-areas: "a b"
                          "c d";
-    border: 5px solid #1A1A1A;
+
 }
 
 .card-pos-a{
     grid-area: a;
     /* background-color: gray; */
-    background-color: gray;
 }
 .card-pos-b{
     grid-area: b;
     /* background-color: goldenrod; */
-    background-color: goldenrod;
 }
 .card-pos-c{
     grid-area: c;
     /* background-color: rosybrown; */
-    background-color: rosybrown;
 }
 .card-pos-d{
     grid-area: d;
     /* background-color: darkcyan; */
-    background-color: darkcyan;
 }
 .card-pos-a, .card-pos-b,.card-pos-c,.card-pos-d{
     display:flex;
     justify-content: center;
     align-items: center;
-    border: 5px solid #1A1A1A;
 }
 
 .card{
@@ -155,6 +150,7 @@ header{
 }
 
 /* CSS */
+
 #playGame {
   appearance: none;
   background-color: transparent;
@@ -183,6 +179,7 @@ header{
   will-change: transform;
   animation: game-play-button-fade-in 10s 1;
 }
+
 
 #playGame:disabled {
   pointer-events: none;
