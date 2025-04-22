@@ -55,12 +55,22 @@ class Player:
         self.bid = int(input(f"\nHow much does {self.name} wanna bid? "))
 
     def play_card(self, leading_suit):
-        choice = {}
+        choices = {}
+        print(f"Remember, {leading_suit} lead")
         for i in range(len(self.hand)):
-            choice[i+1] = self.hand[i]
+            choices[i+1] = self.hand[i]
         
-        print(f"\n{choice}")
+        print(f"\n{choices}")
         play = int(input(f"\nWhich card would {self.name} like to play? "))
+        
+        suit_match = []
+        for i in choices:
+            suit_match.append(choices[i].suit)
+
+        while leading_suit in suit_match and suit_match[play - 1] != leading_suit:
+            print(f"{self.name} can still match the leading suit")
+            play = int(input(f"\nWhich card would {self.name} like to play? "))
+
         self.played_card = self.hand.pop(play - 1)
         print(f"\n{self.name}'s new hand: {self.hand}")
 
@@ -88,10 +98,6 @@ if __name__ == "__main__":
 
     deck = Deck()
     deck.deal(players, cards_per_player)
-    """"
-    print(players[0])
-    print(players[0].hand[0].weight[players[0].hand[0].value])
-    """
 
     trump = deck.reveal_trump()
     leading_suit = None
@@ -100,8 +106,10 @@ if __name__ == "__main__":
     for player in players:
         print(f"\n{player.name}'s hand: {player.hand}")
     
+    """
     for player in players:
         player.bid = input(f"What is {player.name}'s bid? ")
+    """
 
     if trump:
         print(f"\nTrump suit: {trump}")
@@ -110,6 +118,8 @@ if __name__ == "__main__":
 
     # Check point for later, 
     # - Determine which card wins based on the leading suit and trump
+    # - you HAVE to match the leading_suit if you can
+    # - trumps overrule all
     # - Update tricks won, update player score at the end
 
     for i in range(cards_per_player):
@@ -118,6 +128,7 @@ if __name__ == "__main__":
             if leading_suit == None:
                 leading_suit = player.played_card.suit
                 print(f"\n{leading_suit} lead")
+            
 
     for player in players:
         player.round_reset()
