@@ -48,13 +48,14 @@ class Player:
         self.score = 0
         self.bid = 0
         self.tricks = 0
+        self.power = 0
         self.hand = []
         self.played_card = ""
 
     def place_bid(self):
         self.bid = int(input(f"\nHow much does {self.name} wanna bid? "))
 
-    def play_card(self, leading_suit):
+    def play_card(self, leading_suit, trump):
         choices = {}
         print(f"Remember, {leading_suit} lead")
         for i in range(len(self.hand)):
@@ -72,63 +73,99 @@ class Player:
             play = int(input(f"\nWhich card would {self.name} like to play? "))
 
         self.played_card = self.hand.pop(play - 1)
+
+        if self.played_card.suit == trump:
+            self.power = self.played_card.weight[self.played_card.value] + 50
+        elif self.played_card.suit == leading_suit:
+            self.power = self.played_card.weight[self.played_card.value]
+        else:
+            self.power = 0
+
         print(f"\n{self.name}'s new hand: {self.hand}")
 
     def round_reset(self):
         self.bid = 0
         self.tricks = 0
+        self.power = 0
         self.hand = []
+        self.played_card = ""
 
     def __str__(self):
-        return f"\n{self.name}'s score is {self.score} {self.hand} "
+        return f"\n{self.name}'s score is {self.score} {self.hand}"
     
     def __repr__(self):
         return self.__str__()
     
+    def __lt__(self, other):
+        return self.power < other.power
 
 if __name__ == "__main__":
-    #num_players = int(input("Please enter the number of players"))
-    players  = [Player("Jake"), Player("Finn")]
-    cards_per_player = 3
+    players = []
+    num_players = int(input("Please enter the number of players"))
 
-    """
     for _ in range(num_players):
         players.append(Player(input("Enter Name: ")))
-    """
 
     deck = Deck()
+    max_cards = len(deck.cards) // num_players
+    cards_per_player = 3
     deck.deal(players, cards_per_player)
 
     trump = deck.reveal_trump()
-    leading_suit = None
-    winner  = ""
 
     for player in players:
         print(f"\n{player.name}'s hand: {player.hand}")
-    
-    """
+
     for player in players:
-        player.bid = input(f"What is {player.name}'s bid? ")
-    """
+        player.place_bid()
 
     if trump:
         print(f"\nTrump suit: {trump}")
     else:
         print(f"\nNO TRUMP")
 
-    # Check point for later, 
-    # - Determine which card wins based on the leading suit and trump
-    # - you HAVE to match the leading_suit if you can
-    # - trumps overrule all
-    # - Update tricks won, update player score at the end
+    """
+    1. Multiple Rounds Support
+
+        - Start with 1 card/player, go up to a max (e.g., 5), then back down to 1
+
+        - Track the full game, not just one round
+        
+        while cards_per_player != max_cards:
+            cards_per_player += 1
+
+        remember to pause at the max cards for a bit, maybe 5 turns
+            
+        while cards_per_player != 0:
+            cards_per_player -= 1
+
+    3. Bid Rule Enforcement
+
+        - Last bidder can't make total bids equal to number of cards dealt
+
+
+    5. Replay Option
+
+        - Ask if players want to play another game
+
+    6. Alternate who leads every round
+    """
 
     for i in range(cards_per_player):
+        leading_suit = None
         for player in players:
-            player.play_card(leading_suit)
+            player.play_card(leading_suit, trump)
             if leading_suit == None:
                 leading_suit = player.played_card.suit
                 print(f"\n{leading_suit} lead")
-            
-
+        print(f"\n----{max(players).name} takes the trick")  
+        max(players).tricks += 1
+    
     for player in players:
+        if player.bid == player.tricks:
+            player.score += player.bid + 5
+        else:
+            player.score -= max(player.bid, player.tricks)
+        print(f"{player.name}'s current score is {player.score}")
         player.round_reset()
+    
