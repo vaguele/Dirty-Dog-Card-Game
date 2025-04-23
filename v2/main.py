@@ -1,5 +1,7 @@
 import random
 
+# make sure the player who does first, changes after every trick
+
 class Card:
     type = ['Hearts', 'Diamonds', 'Clubs', 'Spades']
     weight = {'2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14}
@@ -106,23 +108,21 @@ class Player:
     def __lt__(self, other):
         return self.power < other.power
 
-def play_round(cards_per_player):
+def play_round(deck, players, cards_per_player):
     deck.deal(players, cards_per_player)
-
-    trump = deck.reveal_trump()
-
     for player in players:
         print(f"\n{player.name}'s hand: {player.hand}")
 
-    for player in players:
-        player.place_bid()
-
+    trump = deck.reveal_trump()
     if trump:
         print(f"\nTrump suit: {trump}")
     else:
         print(f"\nNO TRUMP")
 
-    for i in range(cards_per_player):
+    for player in players:
+        player.place_bid()
+
+    for _ in range(cards_per_player):
         leading_suit = None
         for player in players:
             player.play_card(leading_suit, trump)
@@ -141,28 +141,35 @@ def play_round(cards_per_player):
         player.round_reset()
     deck.refresh()
 
+def play_game(deck, players, max_cards, cards_per_player):
+    while cards_per_player != max_cards:
+        print("\nNEW ROUND")
+        play_round(deck, players, cards_per_player)
+        cards_per_player += 1
+
+    for _ in range(3):
+        print("NEW ROUND")
+        play_round(deck, players, cards_per_player)
+    
+    while cards_per_player != 0:
+        print("\nNEW ROUND")
+        play_round(deck, players, cards_per_player)
+        cards_per_player -= 1
+
 if __name__ == "__main__":
     players = []
     num_players = int(input("Please enter the number of players: "))
 
     for _ in range(num_players):
         players.append(Player(input("Enter Name: ")))
-
+    
     deck = Deck()
     # max_cards = len(deck.cards) -1 // num_players
     max_cards = 3
     cards_per_player = 1
 
-    while cards_per_player != max_cards:
-        print("\nNEW ROUND")
-        play_round(cards_per_player)
-        cards_per_player += 1
+    play_game(deck, players, max_cards, cards_per_player)
 
-    for _ in range(3):
-        print("NEW ROUND")
-        play_round(cards_per_player)
-    
-    while cards_per_player != 0:
-        print("\nNEW ROUND")
-        play_round(cards_per_player)
-        cards_per_player -= 1
+    restart = input("Would you like to play again? (Y/N): ").upper()
+    while restart == "Y":
+        play_game(deck, players, max_cards, cards_per_player)
