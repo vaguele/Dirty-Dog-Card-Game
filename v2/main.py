@@ -97,6 +97,9 @@ class Player:
         self.hand = []
         self.played_card = ""
 
+    def game_reset(self):
+        self.score = 0
+
     def __str__(self):
         return f"\n{self.name}"
     
@@ -148,19 +151,23 @@ def play_round(deck, players, cards_per_player):
     deck.refresh()
 
 def play_game(deck, players, max_cards, cards_per_player):
+    round = 1
     while cards_per_player != max_cards:
-        print("\nNEW ROUND")
+        print(f"\nROUND: {round}")
         play_round(deck, players, cards_per_player)
         cards_per_player += 1
+        round += 1
 
     for _ in range(3):
-        print("NEW ROUND")
+        print(f"\nROUND: {round}")
         play_round(deck, players, cards_per_player)
-    
+        round += 1
+
     while cards_per_player != 0:
-        print("\nNEW ROUND")
+        print(f"\nROUND: {round}")
         play_round(deck, players, cards_per_player)
         cards_per_player -= 1
+        round += 1
 
 def tie_breaker():
     pass
@@ -190,4 +197,6 @@ if __name__ == "__main__":
 
     restart = input("\nWould you like to play again? (Y/N): ").upper()
     while restart == "Y":
+        for player in players:
+            player.game_reset()
         play_game(deck, players, max_cards, cards_per_player)
