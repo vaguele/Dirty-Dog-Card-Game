@@ -40,6 +40,13 @@ class Deck:
                 return None  # NO TRUMP rule
             return top_card.suit
         return None
+    
+    def refresh(self):
+        self.cards = []
+        for suit in Card.type:
+            for value in Card.weight:
+                self.cards.append(Card(suit, value))
+        self.shuffle()
 
 
 class Player:
@@ -99,16 +106,7 @@ class Player:
     def __lt__(self, other):
         return self.power < other.power
 
-if __name__ == "__main__":
-    players = []
-    num_players = int(input("Please enter the number of players"))
-
-    for _ in range(num_players):
-        players.append(Player(input("Enter Name: ")))
-
-    deck = Deck()
-    max_cards = len(deck.cards) // num_players
-    cards_per_player = 3
+def play_round(cards_per_player):
     deck.deal(players, cards_per_player)
 
     trump = deck.reveal_trump()
@@ -131,7 +129,7 @@ if __name__ == "__main__":
             if leading_suit == None:
                 leading_suit = player.played_card.suit
                 print(f"\n{leading_suit} lead")
-        print(f"\n----{max(players).name} takes the trick")  
+        print(f"\n--{max(players).name} takes the trick--")  
         max(players).tricks += 1
     
     for player in players:
@@ -141,4 +139,30 @@ if __name__ == "__main__":
             player.score -= max(player.bid, player.tricks)
         print(f"{player.name}'s current score is {player.score}")
         player.round_reset()
+    deck.refresh()
+
+if __name__ == "__main__":
+    players = []
+    num_players = int(input("Please enter the number of players: "))
+
+    for _ in range(num_players):
+        players.append(Player(input("Enter Name: ")))
+
+    deck = Deck()
+    # max_cards = len(deck.cards) -1 // num_players
+    max_cards = 3
+    cards_per_player = 1
+
+    while cards_per_player != max_cards:
+        print("\nNEW ROUND")
+        play_round(cards_per_player)
+        cards_per_player += 1
+
+    for _ in range(3):
+        print("NEW ROUND")
+        play_round(cards_per_player)
     
+    while cards_per_player != 0:
+        print("\nNEW ROUND")
+        play_round(cards_per_player)
+        cards_per_player -= 1
