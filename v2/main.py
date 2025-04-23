@@ -1,6 +1,6 @@
 import random
 
-# make sure the player who does first, changes after every trick
+# make sure the player who oes first, changes after every trick
 
 class Card:
     type = ['Hearts', 'Diamonds', 'Clubs', 'Spades']
@@ -156,6 +156,9 @@ def play_game(deck, players, max_cards, cards_per_player):
         play_round(deck, players, cards_per_player)
         cards_per_player -= 1
 
+def tie_breaker():
+    pass
+
 if __name__ == "__main__":
     players = []
     num_players = int(input("Please enter the number of players: "))
@@ -163,6 +166,8 @@ if __name__ == "__main__":
     for _ in range(num_players):
         players.append(Player(input("Enter Name: ")))
     
+    random.shuffle(players)
+
     deck = Deck()
     # max_cards = len(deck.cards) -1 // num_players
     max_cards = 3
