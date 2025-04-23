@@ -1,7 +1,5 @@
 import random
 
-# make sure the player who oes first, changes after every trick
-
 class Card:
     type = ['Hearts', 'Diamonds', 'Clubs', 'Spades']
     weight = {'2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14}
@@ -131,6 +129,10 @@ def play_round(deck, players, cards_per_player):
                 print(f"\n{leading_suit} lead")
         print(f"\n--{max(players).name} takes the trick--")  
         max(players).tricks += 1
+
+        new_lead = players.index(max(players))
+        for _ in range(new_lead):
+            players.append(players.pop(0))
     
     for player in players:
         if player.bid == player.tricks:
