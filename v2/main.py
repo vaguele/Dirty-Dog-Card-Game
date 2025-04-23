@@ -98,7 +98,7 @@ class Player:
         self.played_card = ""
 
     def __str__(self):
-        return f"\n{self.name}'s score is {self.score} {self.hand}"
+        return f"\n{self.name}"
     
     def __repr__(self):
         return self.__str__()
@@ -107,6 +107,10 @@ class Player:
         return self.power < other.power
 
 def play_round(deck, players, cards_per_player):
+
+    def commentary():
+        pass
+    
     deck.deal(players, cards_per_player)
     for player in players:
         print(f"\n{player.name}'s hand: {player.hand}")
@@ -169,6 +173,7 @@ if __name__ == "__main__":
         players.append(Player(input("Enter Name: ")))
     
     random.shuffle(players)
+    print(f"\nHere is the game's order: {players}")
 
     deck = Deck()
     # max_cards = len(deck.cards) -1 // num_players
@@ -177,6 +182,12 @@ if __name__ == "__main__":
 
     play_game(deck, players, max_cards, cards_per_player)
 
-    restart = input("Would you like to play again? (Y/N): ").upper()
+    players.sort(key=lambda player: player.score, reverse = True)
+
+    print("Finished Leaderboard")
+    for i in range(len(players)):
+        print(f"{i+1}. {players[i].name}: {players[i].score}")
+
+    restart = input("\nWould you like to play again? (Y/N): ").upper()
     while restart == "Y":
         play_game(deck, players, max_cards, cards_per_player)
