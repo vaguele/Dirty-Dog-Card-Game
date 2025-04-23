@@ -124,33 +124,6 @@ if __name__ == "__main__":
     else:
         print(f"\nNO TRUMP")
 
-    """
-    1. Multiple Rounds Support
-
-        - Start with 1 card/player, go up to a max (e.g., 5), then back down to 1
-
-        - Track the full game, not just one round
-        
-        while cards_per_player != max_cards:
-            cards_per_player += 1
-
-        remember to pause at the max cards for a bit, maybe 5 turns
-            
-        while cards_per_player != 0:
-            cards_per_player -= 1
-
-    3. Bid Rule Enforcement
-
-        - Last bidder can't make total bids equal to number of cards dealt
-
-
-    5. Replay Option
-
-        - Ask if players want to play another game
-
-    6. Alternate who leads every round
-    """
-
     for i in range(cards_per_player):
         leading_suit = None
         for player in players:
