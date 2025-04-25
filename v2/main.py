@@ -1,5 +1,5 @@
 import random
-
+# Press Control + Command + Space to open the emoji panel
 class Card:
     type = ['Hearts', 'Diamonds', 'Clubs', 'Spades']
     weight = {'2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14}
@@ -60,7 +60,12 @@ class Player:
         self.played_card = ""
 
     def place_bid(self):
-        self.bid = int(input(f"\nHow much does {self.name} wanna bid? "))
+        while True:
+            try:
+                self.bid = int(input(f"\nHow much does {self.name} wanna bid? "))
+                break
+            except ValueError as e:
+                print(f"Invalid input: {e}")
 
     def play_card(self, leading_suit, trump):
         choices = {}
@@ -68,16 +73,22 @@ class Player:
         for i in range(len(self.hand)):
             choices[i+1] = self.hand[i]
         
-        print(f"\n{choices}")
-        play = int(input(f"\nWhich card would {self.name} like to play? "))
-        
-        suit_match = []
+        suits_in_hand = []
         for i in choices:
-            suit_match.append(choices[i].suit)
+            suits_in_hand.append(choices[i].suit) 
 
-        while leading_suit in suit_match and suit_match[play - 1] != leading_suit:
-            print(f"{self.name} can still match the leading suit")
-            play = int(input(f"\nWhich card would {self.name} like to play? "))
+        print(f"\n{choices}")
+
+        while True:
+            try:
+                play = int(input(f"\nWhich card would {self.name} like to play? "))
+                if play > len(self.hand) or play < 1:
+                    raise ValueError("Selected card not available")
+                if leading_suit in suits_in_hand and suits_in_hand[play - 1] != leading_suit:
+                    raise ValueError(f"{self.name} can still match the leading suit")
+                break
+            except ValueError as e:
+                print(f"Invalid Input: {e}")
 
         self.played_card = self.hand.pop(play - 1)
 
@@ -174,7 +185,18 @@ def tie_breaker():
 
 if __name__ == "__main__":
     players = []
-    num_players = int(input("Please enter the number of players: "))
+    
+    while True:
+        try:
+            num_players = int(input("Please enter the number of players: "))
+            if num_players < 2:
+                raise ValueError("Too few players. Minimum is 2.")
+            if num_players > 51:
+                raise ValueError("Too many players. Max is 51.")
+            break
+        except ValueError as e:
+            print(f"Invalid input: {e}")
+
 
     for _ in range(num_players):
         players.append(Player(input("Enter Name: ")))
@@ -191,11 +213,19 @@ if __name__ == "__main__":
 
     players.sort(key=lambda player: player.score, reverse = True)
 
-    print("Finished Leaderboard")
+    print("🏆 Final Leaderboard 🏆")
     for i in range(len(players)):
         print(f"{i+1}. {players[i].name}: {players[i].score}")
 
-    restart = input("\nWould you like to play again? (Y/N): ").upper()
+    while True:
+        try:
+            restart = input("\nWould you like to play again? (Y/N): ").upper()
+            if restart not in ["Y", "N"]:
+                raise ValueError
+            break
+        except ValueError:
+            print("Invalid Input. Please enter Y or N")
+
     while restart == "Y":
         for player in players:
             player.game_reset()
