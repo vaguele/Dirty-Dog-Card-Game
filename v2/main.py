@@ -1,124 +1,8 @@
 import random
+from deck import Deck
+from player import Player
+from datetime import datetime
 # Press Control + Command + Space to open the emoji panel
-class Card:
-    type = ['Hearts', 'Diamonds', 'Clubs', 'Spades']
-    weight = {'2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14}
-    
-    def __init__(self, suit, value):
-        self.suit = suit
-        self.value = value
-
-    def strength(self):
-        return Card.weight[self.value]
-
-    def __str__(self):
-        return f"{self.value} of {self.suit}"
-
-    def __repr__(self):
-        return self.__str__()
-
-class Deck:
-    def __init__(self):
-        self.cards = []
-        for suit in Card.type:
-            for value in Card.weight:
-                self.cards.append(Card(suit, value))
-        self.shuffle()
-
-    def shuffle(self):
-        random.shuffle(self.cards)
-
-    def deal(self, players, cards_per_player):
-        for _ in range(cards_per_player):
-            for player in players:
-                player.hand.append(self.cards.pop(0))
-
-    def reveal_trump(self):
-        if self.cards:
-            top_card = self.cards.pop(0)
-            if top_card.value == 'A':
-                return None  # NO TRUMP rule
-            return top_card.suit
-        return None
-    
-    def refresh(self):
-        self.cards = []
-        for suit in Card.type:
-            for value in Card.weight:
-                self.cards.append(Card(suit, value))
-        self.shuffle()
-
-
-class Player:
-    def __init__(self, name):
-        self.name = name
-        self.score = 0
-        self.bid = 0
-        self.tricks = 0
-        self.power = 0
-        self.hand = []
-        self.played_card = ""
-
-    def place_bid(self):
-        while True:
-            try:
-                self.bid = int(input(f"\nHow much does {self.name} wanna bid? "))
-                break
-            except ValueError as e:
-                print(f"Invalid input: {e}")
-
-    def play_card(self, leading_suit, trump):
-        choices = {}
-        print(f"Remember, {leading_suit} lead")
-        for i in range(len(self.hand)):
-            choices[i+1] = self.hand[i]
-        
-        suits_in_hand = []
-        for i in choices:
-            suits_in_hand.append(choices[i].suit) 
-
-        print(f"\n{choices}")
-
-        while True:
-            try:
-                play = int(input(f"\nWhich card would {self.name} like to play? "))
-                if play > len(self.hand) or play < 1:
-                    raise ValueError("Selected card not available")
-                if leading_suit in suits_in_hand and suits_in_hand[play - 1] != leading_suit:
-                    raise ValueError(f"{self.name} can still match the leading suit")
-                break
-            except ValueError as e:
-                print(f"Invalid Input: {e}")
-
-        self.played_card = self.hand.pop(play - 1)
-
-        if self.played_card.suit == trump:
-            self.power = self.played_card.weight[self.played_card.value] + 50
-        elif self.played_card.suit == leading_suit:
-            self.power = self.played_card.weight[self.played_card.value]
-        else:
-            self.power = 0
-
-        print(f"\n{self.name}'s new hand: {self.hand}")
-
-    def round_reset(self):
-        self.bid = 0
-        self.tricks = 0
-        self.power = 0
-        self.hand = []
-        self.played_card = ""
-
-    def game_reset(self):
-        self.score = 0
-
-    def __str__(self):
-        return f"\n{self.name}"
-    
-    def __repr__(self):
-        return self.__str__()
-    
-    def __lt__(self, other):
-        return self.power < other.power
 
 def play_round(deck, players, cards_per_player):
 
@@ -138,13 +22,11 @@ def play_round(deck, players, cards_per_player):
     for player in players:
         player.place_bid()
 
-    for _ in range(cards_per_player):
-        leading_suit = None
-        for player in players:
+    for trick in range(cards_per_player):
+        leading_suit = players[0].play_lead_card(trump)
+        for player in players[1:]:
             player.play_card(leading_suit, trump)
-            if leading_suit == None:
-                leading_suit = player.played_card.suit
-                print(f"\n{leading_suit} lead")
+                
         print(f"\n--{max(players).name} takes the trick--")  
         max(players).tricks += 1
 
@@ -183,7 +65,28 @@ def play_game(deck, players, max_cards, cards_per_player):
 def tie_breaker():
     pass
 
-if __name__ == "__main__":
+def game_results(players):
+    players.sort(key=lambda player: player.score, reverse = True)
+
+    print("🏆 Final Leaderboard 🏆")
+
+    filename = datetime.now().strftime("leaderboard_%Y-%m-%d_%H-%M-%S.txt")
+    with open(filename, "w") as file:
+        for i in range(len(players)):
+            if i == 0:
+                print(f"🥇 {players[i].name}: {players[i].score}")
+                file.write(f"🥇 {players[i].name}: {players[i].score}\n")
+            elif i == 1:
+                print(f"🥈 {players[i].name}: {players[i].score}")
+                file.write(f"🥈 {players[i].name}: {players[i].score}\n")
+            elif i == 2:
+                print(f"🥉 {players[i].name}: {players[i].score}")
+                file.write(f"🥉 {players[i].name}: {players[i].score}\n")
+            else:
+                print(f"{i+1}. {players[i].name}: {players[i].score}")
+                file.write(f"{i+1}. {players[i].name}: {players[i].score}\n")
+
+def main():
     players = []
     
     while True:
@@ -210,12 +113,7 @@ if __name__ == "__main__":
     cards_per_player = 1
 
     play_game(deck, players, max_cards, cards_per_player)
-
-    players.sort(key=lambda player: player.score, reverse = True)
-
-    print("🏆 Final Leaderboard 🏆")
-    for i in range(len(players)):
-        print(f"{i+1}. {players[i].name}: {players[i].score}")
+    game_results(players)
 
     while True:
         try:
@@ -229,4 +127,18 @@ if __name__ == "__main__":
     while restart == "Y":
         for player in players:
             player.game_reset()
+
         play_game(deck, players, max_cards, cards_per_player)
+        game_results(players)
+
+        while True:
+            try:
+                restart = input("\nWould you like to play again? (Y/N): ").upper()
+                if restart not in ["Y", "N"]:
+                    raise ValueError
+                break
+            except ValueError:
+                print("Invalid Input. Please enter Y or N")
+
+if __name__ == "__main__":
+    main()
