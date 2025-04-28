@@ -1,4 +1,5 @@
 class Player:
+    compare_by = ""
     def __init__(self, name):
         self.name = name
         self.score = 0
@@ -7,7 +8,9 @@ class Player:
         self.power = 0
         self.hand = []
         self.played_card = ""
+        self.tied = False
 
+    #bids CANNOT equal number of cards in hand
     def place_bid(self):
         while True:
             try:
@@ -75,6 +78,32 @@ class Player:
         print(f"\n{self.name}'s new hand: {self.hand}")
         print(f"{self.name}'s power is: {self.power}")
 
+    def play_overtime_card(self):
+        choices = {}
+        for i in range(len(self.hand)):
+            choices[i+1] = self.hand[i]
+        
+        suits_in_hand = []
+        for i in choices:
+            suits_in_hand.append(choices[i].suit) 
+
+        print(f"\n{choices}")
+
+        while True:
+            try:
+                play = int(input(f"\nWhich card would {self.name} like to play? "))
+                if play > len(self.hand) or play < 1:
+                    raise ValueError("Selected card not available")
+                break
+            except ValueError as e:
+                print(f"Invalid Input: {e}")
+
+        self.played_card = self.hand.pop(play - 1)
+        self.power = self.played_card.weight[self.played_card.value]
+
+        print(f"\n{self.name}'s new hand: {self.hand}")
+        print(f"{self.name}'s power is: {self.power}")
+
     def round_reset(self):
         self.bid = 0
         self.tricks = 0
@@ -84,6 +113,7 @@ class Player:
 
     def game_reset(self):
         self.score = 0
+        self.tied = False
 
     def __str__(self):
         return f"\n{self.name}"
@@ -92,4 +122,9 @@ class Player:
         return self.__str__()
     
     def __lt__(self, other):
-        return self.power < other.power
+        if Player.compare_by == "score":
+            return self.score < other.score
+        elif Player.compare_by == "power":
+            return self.power < other.power
+        else:
+            raise ValueError("Unknown comparison type")
