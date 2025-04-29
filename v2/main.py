@@ -5,6 +5,7 @@ from datetime import datetime
 
 # Press Control + Command + Space to open the emoji panel
 # go over tie breaking logic
+# maybe add a solo player mode, when the user inputs 1 player, let them select number of cpu's, let them play cards at random?
 
 def play_round(deck, players, cards_per_player):
 
@@ -85,7 +86,7 @@ def play_overtime_round(deck, players, cards_per_player):
             player.score -= max(player.bid, player.tricks)
         else:
             player.score += 0
-        print(f"{player.name}'s current score is {player.score}")
+        print(f"{player.name}'s score: {player.score}")
         player.round_reset()
 
 def play_game(deck, players, max_cards, cards_per_player):
@@ -96,17 +97,20 @@ def play_game(deck, players, max_cards, cards_per_player):
         play_round(deck, players, cards_per_player)
         cards_per_player += 1
         round += 1
+        input("Press Enter to continue...")
 
     for _ in range(3):
         print(f"\nROUND: {round}")
         play_round(deck, players, cards_per_player)
         round += 1
+        input("Press Enter to start the next round...")
 
     while cards_per_player != 0:
         print(f"\nROUND: {round}")
         play_round(deck, players, cards_per_player)
         cards_per_player -= 1
         round += 1
+        input("Press Enter to continue...")
 
 def tie_breaker(deck, players, placement):
     # Determine top winner

@@ -47,7 +47,7 @@ class Player:
                 print(f"Invalid Input: {e}")
 
         self.played_card = self.hand.pop(play - 1)
-        print(f"\n{self.played_card} lead")
+        print(f"\n{self.played_card.suit} lead")
 
         if self.played_card.suit == trump:
             self.strength = self.played_card.weight[self.played_card.value] + 50
@@ -114,7 +114,6 @@ class Player:
         self.strength = self.played_card.weight[self.played_card.value]
 
         print(f"\n{self.name}'s new hand: {self.hand}")
-        print(f"{self.name}'s strength is: {self.strength}")
 
     def round_reset(self):
         self.bid = 0
