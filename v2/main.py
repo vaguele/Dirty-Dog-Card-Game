@@ -2,8 +2,9 @@ import random
 from deck import Deck
 from player import Player
 from datetime import datetime
+
 # Press Control + Command + Space to open the emoji panel
-# last bidder cannot bid equal to num of cards
+# go over tie breaking logic
 
 def play_round(deck, players, cards_per_player):
 
@@ -20,15 +21,16 @@ def play_round(deck, players, cards_per_player):
     else:
         print(f"\nNO TRUMP")
 
-    for player in players:
+    for player in players[:-1]:
         player.place_bid()
+    players[-1].place_last_bid()
 
-    for trick in range(cards_per_player):
+    for card in range(cards_per_player):
         leading_suit = players[0].play_lead_card(trump)
         for player in players[1:]:
             player.play_card(leading_suit, trump)
 
-        Player.compare_by = "power"        
+        Player.compare_by = "strength"        
         print(f"\n--{max(players).name} takes the trick--")  
         max(players).tricks += 1
 
@@ -49,11 +51,10 @@ def play_overtime_round(deck, players, cards_per_player):
 
     def commentary():
         pass
-    
-    deck.deal(players, cards_per_player)
 
-    for player in players:
+    for player in players[:-1]:
         player.place_bid()
+    players[-1].place_last_bid()
 
     for player in players:
         print(f"\n{player.name}'s hand: {player.hand}")
@@ -64,12 +65,12 @@ def play_overtime_round(deck, players, cards_per_player):
     else:
         print(f"\nNO TRUMP")
 
-    for trick in range(cards_per_player):
+    for card in range(cards_per_player):
         leading_suit = players[0].play_lead_card(trump)
         for player in players[1:]:
             player.play_card(leading_suit, trump)
 
-        Player.compare_by = "power"        
+        Player.compare_by = "strength"        
         print(f"\n--{max(players).name} takes the trick--")  
         max(players).tricks += 1
 
@@ -86,7 +87,6 @@ def play_overtime_round(deck, players, cards_per_player):
             player.score += 0
         print(f"{player.name}'s current score is {player.score}")
         player.round_reset()
-    deck.refresh()
 
 def play_game(deck, players, max_cards, cards_per_player):
     round = 1
@@ -113,7 +113,7 @@ def tie_breaker(deck, players, placement):
     if placement == "winner":
         max_cards = len(deck.cards) -1 // len(players)
         cards_per_player = min(5, max_cards)
-        deck.deal(players,cards_per_player)
+        deck.deal(players, cards_per_player)
 
         round = 1
         while cards_per_player != 0:
@@ -122,19 +122,17 @@ def tie_breaker(deck, players, placement):
             cards_per_player -= 1
             round += 1
 
-        pass
     # Determine lowest loser
     if placement == "loser":
         deck.deal(players, 1)
 
         for player in players:
             player.play_overtime_card()
-        Player.compare_by = "power"
+        Player.compare_by = "strength"
 
         for player in players:
-            if player.power == min(players):
+            if player.strength == min(players):
                 player.score -= 1
-    pass
 
 def game_results(deck, players):
     Player.compare_by = "score"   
@@ -159,7 +157,6 @@ def game_results(deck, players):
             count += 1
     if count > 1:
         tie_breaker(deck, lowest_players, "loser")
-
 
     print("🏆 Final Leaderboard 🏆")
 
@@ -192,7 +189,6 @@ def main():
             break
         except ValueError as e:
             print(f"Invalid input: {e}")
-
 
     for _ in range(num_players):
         players.append(Player(input("Enter Name: ")))

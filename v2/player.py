@@ -1,11 +1,12 @@
 class Player:
     compare_by = ""
+    total_bids = 0
     def __init__(self, name):
         self.name = name
         self.score = 0
         self.bid = 0
         self.tricks = 0
-        self.power = 0
+        self.strength = 0
         self.hand = []
         self.played_card = ""
         self.tied = False
@@ -15,6 +16,17 @@ class Player:
         while True:
             try:
                 self.bid = int(input(f"\nHow much does {self.name} wanna bid? "))
+                break
+            except ValueError as e:
+                print(f"Invalid input: {e}")
+        Player.total_bids += self.bid
+    
+    def place_last_bid(self):
+        while True:
+            try:
+                self.bid = int(input(f"\nHow much does {self.name} wanna bid? "))
+                if self.bid + Player.total_bids == len(self.hand):
+                    raise ValueError(f"Number of bids cannot equal tricks per hand")
                 break
             except ValueError as e:
                 print(f"Invalid input: {e}")
@@ -38,9 +50,9 @@ class Player:
         print(f"\n{self.played_card} lead")
 
         if self.played_card.suit == trump:
-            self.power = self.played_card.weight[self.played_card.value] + 50
+            self.strength = self.played_card.weight[self.played_card.value] + 50
         else:
-            self.power = self.played_card.weight[self.played_card.value]
+            self.strength = self.played_card.weight[self.played_card.value]
         return self.played_card.suit
 
     def play_card(self, leading_suit, trump):
@@ -69,14 +81,14 @@ class Player:
         self.played_card = self.hand.pop(play - 1)
 
         if self.played_card.suit == trump:
-            self.power = self.played_card.weight[self.played_card.value] + 50
+            self.strength = self.played_card.weight[self.played_card.value] + 50
         elif self.played_card.suit == leading_suit:
-            self.power = self.played_card.weight[self.played_card.value]
+            self.strength = self.played_card.weight[self.played_card.value]
         else:
-            self.power = 0
+            self.strength = 0
 
         print(f"\n{self.name}'s new hand: {self.hand}")
-        print(f"{self.name}'s power is: {self.power}")
+        print(f"{self.name}'s strength is: {self.strength}")
 
     def play_overtime_card(self):
         choices = {}
@@ -99,17 +111,18 @@ class Player:
                 print(f"Invalid Input: {e}")
 
         self.played_card = self.hand.pop(play - 1)
-        self.power = self.played_card.weight[self.played_card.value]
+        self.strength = self.played_card.weight[self.played_card.value]
 
         print(f"\n{self.name}'s new hand: {self.hand}")
-        print(f"{self.name}'s power is: {self.power}")
+        print(f"{self.name}'s strength is: {self.strength}")
 
     def round_reset(self):
         self.bid = 0
         self.tricks = 0
-        self.power = 0
+        self.strength = 0
         self.hand = []
         self.played_card = ""
+        Player.total_bids = 0
 
     def game_reset(self):
         self.score = 0
@@ -124,7 +137,7 @@ class Player:
     def __lt__(self, other):
         if Player.compare_by == "score":
             return self.score < other.score
-        elif Player.compare_by == "power":
-            return self.power < other.power
+        elif Player.compare_by == "strength":
+            return self.strength < other.strength
         else:
             raise ValueError("Unknown comparison type")
