@@ -1,11 +1,14 @@
-import random
+import random, os
 from deck import Deck
 from player import Player
 from datetime import datetime
 
 # Press Control + Command + Space to open the emoji panel
-# go over tie breaking logic
-# maybe add a solo player mode, when the user inputs 1 player, let them select number of cpu's, let them play cards at random?
+#  assure tie breaking logic quality
+# ENDGAME: maybe add a solo player mode, with CPUs
+# multiplayer
+# Trophies
+# commentary
 
 def play_round(deck, players, cards_per_player):
 
@@ -115,6 +118,7 @@ def play_game(deck, players, max_cards, cards_per_player):
 def tie_breaker(deck, players, placement):
     # Determine top winner
     if placement == "winner":
+        print("\nLooks like theres a tie for First Place")
         max_cards = len(deck.cards) -1 // len(players)
         cards_per_player = min(5, max_cards)
         deck.deal(players, cards_per_player)
@@ -127,6 +131,7 @@ def tie_breaker(deck, players, placement):
             round += 1
 
     # Determine lowest loser
+    print("\nLooks like theres a tie for Last Place")
     if placement == "loser":
         deck.deal(players, 1)
 
@@ -164,8 +169,14 @@ def game_results(deck, players):
 
     print("🏆 Final Leaderboard 🏆")
 
+    folder = os.path.dirname(__file__)
     filename = datetime.now().strftime("leaderboard_%Y-%m-%d_%H-%M-%S.txt")
-    with open(filename, "w") as file:
+    save_folder = os.path.join(folder, "previous games")
+
+    os.makedirs(save_folder, exist_ok=True)
+    filepath = os.path.join(save_folder, filename)
+
+    with open(filepath, "w") as file:
         for i in range(len(players)):
             if i == 0:
                 print(f"🥇 {players[i].name}: {players[i].score}")
