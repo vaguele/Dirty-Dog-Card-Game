@@ -1,22 +1,42 @@
 import socket
+import threading
 
-HOST = 'localhost'  # or your LAN IP like '192.168.1.5'
+HOST = 'localhost'
 PORT = 5050
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind((HOST, PORT))
 server.listen()
+print(f"[SERVER] Listening on {HOST}:{PORT}")
 
-print(f"[SERVER] Listening on {HOST}:{PORT}...")
-conn, addr = server.accept()
-print(f"[SERVER] Connected by {addr}")
+clients = []
 
-while True:
-    data = conn.recv(1024).decode()
-    if data == "quit":
-        print("[SERVER] Client disconnected.")
-        break
-    print(f"[CLIENT] {data}")
-    conn.send("Got it!".encode())
+def handle_client(conn, address):
+    print(f"[NEW CONNECTION] {address} connected.")
+    clients.append(conn)
 
-conn.close()
+    while True:
+        try:
+            message = conn.recv(1024)
+            if not message:
+                break
+            broadcast(message, conn)
+        except:
+            break
+
+    print(f"[DISCONNECT] {address} disconnected.")
+    clients.remove(conn)
+    conn.close()
+
+def broadcast(message, sender_conn):
+    for client in clients:
+        if client != sender_conn:
+            client.send(message)
+
+def start():
+    while True:
+        conn, address = server.accept()
+        thread = threading.Thread(target=handle_client, args=(conn, address))
+        thread.start()
+
+start()

@@ -1,19 +1,27 @@
 import socket
+import threading
 
 HOST = 'localhost'
 PORT = 5050
 
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-client.connect((HOST, PORT))  # corrected spelling + proper usage
+client.connect((HOST, PORT))
 
-while True:
-    msg = input("You: ")
-    client.send(msg.encode())
+def receive():
+    while True:
+        try:
+            msg = client.recv(1024).decode()
+            print(f"\n[RECEIVED] {msg}")
+        except:
+            print("[ERROR] Disconnected from server.")
+            client.close()
+            break
 
-    if msg.lower() == "quit":
-        break
+def send():
+    while True:
+        msg = input("You: ")
+        client.send(msg.encode())
 
-    response = client.recv(1024).decode()
-    print(f"Server: {response}")
-
-client.close()
+# Start threads
+threading.Thread(target=receive, daemon=True).start()
+send()
