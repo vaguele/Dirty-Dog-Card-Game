@@ -10,8 +10,13 @@ server.listen()
 print(f"[SERVER] Listening on {HOST}:{PORT}")
 
 clients = []
+players = {}  # conn: {"name": str}
+MIN_PLAYERS = 3
+game_started = False
 
 def handle_client(conn, addr):
+    global game_started
+
     print(f"[NEW CONNECTION] {addr} connected.")
     # sends a message from the server to the client 
     # encode() converts string to bytes
@@ -26,16 +31,26 @@ def handle_client(conn, addr):
             msg = conn.recv(1024).decode().strip()
             if not msg:
                 break
-
+            
+            # JOIN command
             if msg.startswith("JOIN "):
                 player_name = msg[5:].strip()
+                players[conn] = {"name": player_name}
                 print(f"[JOIN] {player_name} joined from {addr}")
                 conn.send(f"Hello, {player_name}! You joined the game.".encode())
+                conn.send(f"\nWaiting for other players...".encode())
                 broadcast(f"{player_name} has joined the game.".encode(), conn)
 
-            elif msg.startswith("SAY "):
+                # Start game when enough players join
+                if not game_started and len(players) >= MIN_PLAYERS:
+                    broadcast("GAME START".encode(), None)
+                    game_started = True
+                continue
+
+            # SAY command
+            elif msg:
                 if player_name:
-                    chat_msg = msg[4:].strip()
+                    chat_msg = msg.strip()
                     print(f"[{player_name}] says: {chat_msg}")
                     broadcast(f"{player_name}: {chat_msg}".encode(), conn)
                 else:

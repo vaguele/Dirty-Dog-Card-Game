@@ -22,6 +22,7 @@ def receive():
 
 def send():
     name = input("Enter your name: ")
+
     # Send JOIN command on connection
     client.send(f"{name}".encode())  
 
@@ -30,8 +31,7 @@ def send():
             msg = input("You: ")
             if msg.lower() == "quit":
                 break
-            # Send SAY command for each message
-            client.send(f"SAY {msg}".encode())  
+            client.send(f"{msg}".encode())  
         except:
             break
     client.close()
