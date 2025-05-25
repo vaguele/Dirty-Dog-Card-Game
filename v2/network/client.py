@@ -11,16 +11,30 @@ def receive():
     while True:
         try:
             msg = client.recv(1024).decode()
-            print(f"\n[RECEIVED] {msg}")
+            if msg:
+                print(f"\n{msg}")
+            else:
+                break
         except:
             print("[ERROR] Disconnected from server.")
             client.close()
             break
 
 def send():
+    name = input("Enter your name: ")
+    # Send JOIN command on connection
+    client.send(f"{name}".encode())  
+
     while True:
-        msg = input("You: ")
-        client.send(msg.encode())
+        try:
+            msg = input("You: ")
+            if msg.lower() == "quit":
+                break
+            # Send SAY command for each message
+            client.send(f"SAY {msg}".encode())  
+        except:
+            break
+    client.close()
 
 # Start threads
 threading.Thread(target=receive, daemon=True).start()
