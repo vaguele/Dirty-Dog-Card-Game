@@ -4,14 +4,22 @@ import random
 
 class Game:
     def __init__(self):
-        self.players = {}  # conn: Player
+        self.players = {}  # conn: Player -> hand
         self.ready_players = set()
         self.min_players = 2
-        self.game_started = False
         self.deck = Deck()
         self.turn_order = []
+        
+        self.last_conn = None
         self.current_turn_index = 0
+        self.cards_per_player = 3
+
         self.bids = {}
+        self.bid_count = 0
+
+        self.game_started = False
+        self.BID_PHASE = False
+        self.PLAY_PHASE = False
 
     def add_player(self, conn, name):
         self.players[conn] = Player(name)
@@ -34,7 +42,7 @@ class Game:
     def start_game(self):
         self.game_started = True
         self.deck.shuffle()
-        self.deck.deal(list(self.players.values()), cards_per_player=3)
+        self.deck.deal(list(self.players.values()), self.cards_per_player)
 
         self.turn_order = list(self.players.keys())
         random.shuffle(self.turn_order)
@@ -42,6 +50,7 @@ class Game:
 
     def place_bid(self, conn, bid):
         self.bids[conn] = bid
+        self.bid_count += bid
 
             
     def build_hands(self):
@@ -53,6 +62,9 @@ class Game:
 
     def get_current_player_conn(self):
         return self.turn_order[self.current_turn_index]
+
+    def get_last_player_conn(self):
+        return self.turn_order[self.current_turn_index - 1]
     
     def is_player_turn(self, conn):
         return conn == self.get_current_player_conn()
@@ -62,6 +74,7 @@ class Game:
 
     def debug_state(self):
         print("Players:", [p.name for p in self.players.values()])
+        print("Hands:", [p.hand for p in self.players.values()])
         print("Ready:", [self.players[c].name for c in self.ready_players])
         print("Turn order:", [self.players[c].name for c in self.turn_order])
         print("Current:", self.players[self.get_current_player_conn()].name)

@@ -30,7 +30,7 @@ def handle_client(conn, addr):
                 break
             
             # JOIN command
-            if msg.startswith("JOIN "):
+            if msg.startswith("JOIN ") and game.game_started == False:
                 player_name = msg[5:].strip()
 
                 name_taken = False
@@ -61,7 +61,7 @@ def handle_client(conn, addr):
 
 
             # READY command
-            elif msg.startswith("READY"):
+            elif msg.startswith("READY") and game.game_started == False:
                 if player_name:
                     print(f"[{player_name}] is ready to play")
                     broadcast(f"{player_name} is ready to play".encode(), conn)
@@ -72,6 +72,7 @@ def handle_client(conn, addr):
                         hands = game.build_hands()
 
                         broadcast("Place your bid using '<BID> #'".encode(), None)
+                        game.BID_PHASE = True
 
                         for player_conn, hand_msg in hands.items():
                             player_conn.send(hand_msg.encode())
@@ -81,7 +82,9 @@ def handle_client(conn, addr):
                         current_conn = game.get_current_player_conn()
                         current_conn.send("\nIt's your turn.".encode())
             
-            elif msg.startswith("BID "):
+
+            #MAKE SURE TO REMEMBER BID RESTRICTIONS FOR CERTAIN PLAYERS (last bid cannot equal number of cards)
+            elif msg.startswith("BID ") and game.BID_PHASE == True:
                 if not game.game_started:
                     conn.send("The game hasn't started yet.".encode())
                     continue
@@ -89,12 +92,20 @@ def handle_client(conn, addr):
                 if not game.is_player_turn(conn):
                     conn.send("It's not your turn.".encode())
                     continue
+
+                if not game.last_conn:
+                    game.last_conn = game.get_last_player_conn()
                 
+                game.BID_PHASE = True
                 player = game.players[conn]
                 bid = msg[4:].strip()
 
                 if not bid.isdigit():
                     conn.send("Please enter a valid digit".encode())
+                    continue
+            
+                elif int(bid) + game.bid_count == game.cards_per_player and conn == game.last_conn:
+                    conn.send("Number of bids cannot equal number of cards in hand".encode())
                     continue
 
                 broadcast(f"{player.name} has bid {bid} card(s)".encode(), conn)
@@ -105,16 +116,30 @@ def handle_client(conn, addr):
                 game.advance_turn()
                 if len(game.bids) < len(game.players):
                     next_conn = game.get_current_player_conn()
-                    next_conn.send("Your turn to bid. Type: BID <number>".encode())
+                    next_conn.send("Your turn to bid. Type: '<BID> #'".encode())
+                
                 else:
                     game.debug_state()
+                    hands = game.build_hands()
+
                     for player_conn, hand_msg in hands.items():
                         player_conn.send(hand_msg.encode())
 
                     first_conn = game.get_current_player_conn()
-                    first_conn.send("All bids received. Your turn to play. Type: PLAY <card>".encode())
+                    broadcast("All bids received.".encode(), None)
+                    game.BID_PHASE = False
+                    
+                    first_conn.send("Your turn to play. Type: '<PLAY> card'".encode())
+                    game.advance_turn()
 
-            elif msg.startswith("PLAY "):
+                    next_conn = game.get_current_player_conn()
+                    if next_conn != game.last_conn:
+                        next_conn.send("Your turn to bid. Type: '<BID> #'".encode())
+                    else:
+                        next_conn.send("Your turn to bid. Type: '<BID> #'".encode())
+
+
+            elif msg.startswith("PLAY ") and game.PLAY_PHASE == True:
                 if not game.game_started:
                     conn.send("The game hasn't started yet.".encode())
                     continue
@@ -137,8 +162,11 @@ def handle_client(conn, addr):
                     conn.send("You don't have that card.".encode())
                     continue
 
-
                 # Remove card from hand and broadcast play
+
+
+
+                # I NEED TO TRACK PLAYED CARDS SOMEHOW, TRUMPS, TRICKS,
                 player.hand.remove(matching_card)
                 broadcast(f"{player.name} played {card_played}".encode(), conn)
                 
@@ -150,7 +178,7 @@ def handle_client(conn, addr):
                 next_conn.send("It's your turn.".encode())
 
             else:
-                conn.send("Unknown command.".encode())
+                conn.send("Invalid command.".encode())
 
         except Exception as e:
             print(f"[ERROR] {addr} - {e}")
