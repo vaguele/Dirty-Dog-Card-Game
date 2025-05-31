@@ -1,0 +1,2 @@
+Familiarize with server.py + game.py
+2. Get bids to work

@@ -28,7 +28,7 @@ def send():
 
     while True:
         try:
-            msg = input("You: ")
+            msg = input("")
             if msg.lower() == "quit":
                 break
             client.send(f"{msg}".encode())  
