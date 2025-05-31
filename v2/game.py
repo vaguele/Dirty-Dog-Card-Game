@@ -11,6 +11,7 @@ class Game:
         self.deck = Deck()
         self.turn_order = []
         self.current_turn_index = 0
+        self.bids = {}
 
     def add_player(self, conn, name):
         self.players[conn] = Player(name)
@@ -39,7 +40,10 @@ class Game:
         random.shuffle(self.turn_order)
         self.current_turn_index = 0
 
-    
+    def place_bid(self, conn, bid):
+        self.bids[conn] = bid
+
+            
     def build_hands(self):
         hands = {}
         for conn, player in self.players.items():
@@ -49,7 +53,7 @@ class Game:
 
     def get_current_player_conn(self):
         return self.turn_order[self.current_turn_index]
-     
+    
     def is_player_turn(self, conn):
         return conn == self.get_current_player_conn()
 
