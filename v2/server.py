@@ -18,6 +18,16 @@ deck = Deck()
 game = Game()
 MIN_PLAYERS = 2
 
+
+def format_player_list():
+    """Return a nicely formatted list of current players with score and READY status."""
+    lines = ["Players in this game:"]
+    for i, conn in enumerate(game.players.keys(), start=1):
+        p = game.players[conn]
+        status = "[READY]" if conn in game.ready_players else "[NOT READY]"
+        lines.append(f"{i}) {p.name} {status}")
+    return "\n".join(lines)
+
 def handle_client(conn, addr):
     print(f"[NEW CONNECTION] {addr} connected.")
     conn.send("Welcome! Please type 'JOIN <name>' to enter the game.".encode())
@@ -48,9 +58,11 @@ def handle_client(conn, addr):
                 game.add_player(conn, player_name)
                 print(f"[JOIN] {player_name} joined from {addr}")
                 conn.send(f"Hello, {player_name}! You joined the game.".encode())
-                conn.send(f"\nWaiting for other players...".encode())
-                conn.send("Game starts when all players type <READY>".encode())
-                broadcast(f"{player_name} has joined the game.".encode(), conn)
+                # Send the joining player a formatted list of current players
+                conn.send(format_player_list().encode())
+                conn.send("\n\nGame starts when all players type <READY>".encode())
+                # Instead of a join message, broadcast the updated player list
+                broadcast(format_player_list().encode(), conn)
 
             # SAY command
             elif msg.startswith("SAY "):
@@ -65,8 +77,11 @@ def handle_client(conn, addr):
             elif msg.startswith("READY") and game.game_started == False:
                 if player_name:
                     print(f"[{player_name}] is ready to play")
-                    broadcast(f"{player_name} is ready to play".encode(), conn)
-                    if game.mark_ready(conn):
+                    # Mark the player as ready first so the formatted list includes them
+                    all_ready = game.mark_ready(conn)
+                    # Broadcast only the updated formatted player list (no separate text)
+                    broadcast(format_player_list().encode(), None)
+                    if all_ready:
                         broadcast("\nGAME STARTING!".encode(), None)
                         
                         game.start_game()
@@ -74,9 +89,9 @@ def handle_client(conn, addr):
 
                         # Reveal trump to all players before bidding
                         if game.trump:
-                            broadcast(f"TRUMP is {game.trump}".encode(), None)
+                            broadcast(f"\nTRUMP is {game.trump}".encode(), None)
                         else:
-                            broadcast("NO-TRUMP this hand".encode(), None)
+                            broadcast("\nNO TRUMP this hand".encode(), None)
 
                         broadcast("\nPlace your bid using '<BID> #'".encode(), None)
                         game.BID_PHASE = True
@@ -247,6 +262,8 @@ def handle_client(conn, addr):
     print(f"[DISCONNECT] {addr} disconnected.")
     if player_name:
         broadcast(f"{player_name} has left the game.".encode(), conn)
+        # Broadcast updated player list after disconnect
+        broadcast(format_player_list().encode(), None)
         handle_disconnect(conn)
     conn.close()
 

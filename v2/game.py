@@ -14,6 +14,16 @@ class Game:
         self.current_turn_index = 0
         # start with one card per player; will increment each round in reset()
         self.cards_per_player = 1
+        self.max_cards = 0
+        
+        # lifecycle controls for dealing: when cards_per_player reaches the
+        # computed max, play that size for `hold_rounds` additional rounds,
+        # then enter decreasing phase where cards_per_player decreases by 1
+        # each round until it reaches 0 (match over).
+        self.hold_rounds = 3
+        self.hold_rounds_remaining = None
+        self.decreasing_phase = False
+        self.match_over = False
 
         self.bids = {}
         self.bid_count = 0
@@ -47,6 +57,13 @@ class Game:
     
     def start_game(self):
         self.game_started = True
+
+        # Compute maximum cards per player so that after dealing each player gets
+        # the same number and one card remains to reveal trump.
+        num_players = len(self.players)
+        deck_size = len(self.deck.cards)
+        self.max_cards = (deck_size - 1) // num_players
+
         self.deck.shuffle()
         self.deck.deal(list(self.players.values()), self.cards_per_player)
 
@@ -107,22 +124,39 @@ class Game:
         self.last_conn = None
         self.current_turn_index = 0
 
-        # Compute maximum cards per player so that after dealing each player gets
-        # the same number and one card remains to reveal trump.
-        num_players = max(1, len(self.players))
-        deck_size = len(self.deck.cards)
-        max_cards = (deck_size - 1) // num_players
 
-        # Increase cards_per_player by one each round until reaching max_cards
-        if self.cards_per_player < max_cards:
-            self.cards_per_player += 1
+        # Lifecycle transitions:
+        if self.max_cards <= 0:
+            # No cards can be dealt while leaving a trump card; match over
+            self.cards_per_player = 0
+            self.match_over = True
+        elif not self.decreasing_phase:
+            # Ramp up toward max_cards
+            if self.cards_per_player < self.max_cards:
+                self.cards_per_player += 1
+            else:
+                # We've reached or exceeded max; initialize hold counter if needed
+                if self.hold_rounds_remaining is None:
+                    self.hold_rounds_remaining = self.hold_rounds
+
+                if self.hold_rounds_remaining > 0:
+                    # Consume one of the hold rounds and remain at max
+                    self.hold_rounds_remaining -= 1
+                    self.cards_per_player = self.max_cards
+                else:
+                    # Finished holding at max -> begin decreasing next round
+                    self.decreasing_phase = True
+                    self.cards_per_player = self.max_cards - 1
         else:
-            # don't exceed max_cards
-            self.cards_per_player = max_cards
+            # Decreasing phase: reduce cards by one each round
+            self.cards_per_player = self.cards_per_player - 1
+
+        # If we've dropped to zero, the match is over
+        if self.cards_per_player <= 0:
+            self.match_over = True
 
         self.bids = {}
         self.bid_count = 0
-
         self.played_cards = {}
 
         self.game_started = False
