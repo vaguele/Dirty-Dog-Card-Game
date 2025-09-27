@@ -12,14 +12,20 @@ class Game:
         
         self.last_conn = None
         self.current_turn_index = 0
-        self.cards_per_player = 3
+        # start with one card per player; will increment each round in reset()
+        self.cards_per_player = 1
 
         self.bids = {}
         self.bid_count = 0
 
+        self.played_cards = {}
+
         self.game_started = False
         self.BID_PHASE = False
         self.PLAY_PHASE = False
+
+        self.leading_suit = None
+        self.trump = None
 
     def add_player(self, conn, name):
         self.players[conn] = Player(name)
@@ -47,6 +53,11 @@ class Game:
         self.turn_order = list(self.players.keys())
         random.shuffle(self.turn_order)
         self.current_turn_index = 0
+        # Reveal trump from deck if any
+        try:
+            self.trump = self.deck.reveal_trump()
+        except Exception:
+            self.trump = None
 
     def place_bid(self, conn, bid):
         self.bids[conn] = bid
@@ -62,12 +73,18 @@ class Game:
 
     def get_current_player_conn(self):
         return self.turn_order[self.current_turn_index]
-
-    def get_last_player_conn(self):
-        return self.turn_order[self.current_turn_index - 1]
     
     def is_player_turn(self, conn):
         return conn == self.get_current_player_conn()
+
+    def get_last_player_conn(self):
+        """Return the connection object for the last player in the turn order.
+
+        Returns None if there is no turn order yet.
+        """
+        if not self.turn_order:
+            return None
+        return self.turn_order[-1]
 
     def advance_turn(self):
         self.current_turn_index = (self.current_turn_index + 1) % len(self.turn_order)
@@ -80,4 +97,37 @@ class Game:
         print("Current:", self.players[self.get_current_player_conn()].name)
 
     def reset(self):
-        self.__init__()  # Simple reset
+        # Preserve player objects and connections, reset per-hand state
+        for player in self.players.values():
+            player.round_reset()
+
+        self.ready_players = set()
+        self.deck.refresh()
+        self.turn_order = []
+        self.last_conn = None
+        self.current_turn_index = 0
+
+        # Compute maximum cards per player so that after dealing each player gets
+        # the same number and one card remains to reveal trump.
+        num_players = max(1, len(self.players))
+        deck_size = len(self.deck.cards)
+        max_cards = (deck_size - 1) // num_players
+
+        # Increase cards_per_player by one each round until reaching max_cards
+        if self.cards_per_player < max_cards:
+            self.cards_per_player += 1
+        else:
+            # don't exceed max_cards
+            self.cards_per_player = max_cards
+
+        self.bids = {}
+        self.bid_count = 0
+
+        self.played_cards = {}
+
+        self.game_started = False
+        self.BID_PHASE = False
+        self.PLAY_PHASE = False
+
+        self.leading_suit = None
+        self.trump = None

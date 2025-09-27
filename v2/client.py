@@ -10,9 +10,15 @@ client.connect((HOST, PORT))
 def receive():
     while True:
         try:
-            msg = client.recv(1024).decode()
+            # Read a larger buffer and normalize whitespace so server-leading newlines
+            # don't produce double blank lines on the client terminal.
+            msg = client.recv(4096).decode()
             if msg:
-                print(f"\n{msg}")
+                # Strip leading/trailing whitespace/newlines then print with a single
+                # leading newline for consistent spacing.
+                normalized = msg.strip()
+                if normalized:
+                    print(f"\n{normalized}")
             else:
                 break
         except:
