@@ -1,2 +1,3 @@
-Familiarize with server.py + game.py
-2. Get bids to work
+Ensure gameplay works, (taking tricks, number of games, hand size changes, and scoring)
+
+Build a front end for the game
