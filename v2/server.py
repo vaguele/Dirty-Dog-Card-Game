@@ -31,6 +31,17 @@ def format_player_list():
         lines.append(f"{i}) {p.name} {status}")
     return "\n".join(lines)
 
+
+def announce_current_turn():
+    """Broadcast which player's turn it currently is (by name)."""
+    try:
+        current = game.get_current_player_conn()
+        if current in game.players:
+            name = game.players[current].name
+            broadcast(f"\nTURN: {name}'s turn".encode(), None)
+    except Exception:
+        pass
+
 def handle_client(conn, addr):
     print(f"[NEW CONNECTION] {addr} connected.")
     conn.send("Welcome! Please type 'JOIN <name>' to enter the game.".encode())
@@ -109,6 +120,7 @@ def handle_client(conn, addr):
 
                         current_conn = game.get_current_player_conn()
                         current_conn.send("\nIt's your turn.".encode())
+                        announce_current_turn()
             
             elif msg.startswith("BID ") and game.BID_PHASE == True:
                 if not game.game_started:
@@ -143,6 +155,7 @@ def handle_client(conn, addr):
                 if len(game.bids) < len(game.players):
                     next_conn = game.get_current_player_conn()
                     next_conn.send("\nYour turn to bid. Type: '<BID> #'".encode())
+                    announce_current_turn()
                 
                 else:
                     game.debug_state()
@@ -156,9 +169,12 @@ def handle_client(conn, addr):
                     for player_conn, hand_msg in hands.items():
                         player_conn.send(hand_msg.encode())
                     first_conn.send("\nYour turn to play. Type: '<PLAY> card'".encode())
+                    announce_current_turn()
 
                     game.PLAY_PHASE = True
-                    game.advance_turn()
+                    # DO NOT advance here: the first player should be able to play
+                    # before the turn index moves. advance_turn() is called after
+                    # they actually play.
 
             elif msg.startswith("PLAY ") and game.PLAY_PHASE == True:
                 if not game.game_started:
@@ -193,8 +209,15 @@ def handle_client(conn, addr):
                 game.played_cards[conn] = matching_card
                 player.hand.remove(matching_card)
 
-                broadcast(f"{player.name} played {card_played}".encode(), conn)
-                conn.send(str(player.hand).encode())
+                # Announce the play consistently to all players (including the player)
+                broadcast(f"\n{player.name} played {card_played}".encode(), None)
+
+                # Send the player their updated hand in a consistent format
+                hand_str = ', '.join(str(card) for card in player.hand)
+                try:
+                    conn.send(f"\nYour hand: {hand_str}".encode())
+                except Exception:
+                    pass
 
                 # If this is the first card of the trick, set leading suit
                 if len(game.played_cards) == 1:
@@ -205,6 +228,7 @@ def handle_client(conn, addr):
                 if len(game.played_cards) < len(game.players):
                     next_conn = game.get_current_player_conn()
                     next_conn.send("\nYour turn to PLAY. Type: '<PLAY> card'".encode())
+                    announce_current_turn()
                 else:
                     # All players have played: resolve trick
                     game.debug_state()
@@ -235,11 +259,10 @@ def handle_client(conn, addr):
                     # Clear played cards for next trick and set next turn to winner
                     game.played_cards = {}
                     game.leading_suit = None
-                    # set current turn index to winner
+                    # set current turn index to winner (winner leads next)
                     if winner_conn in game.turn_order:
                         game.current_turn_index = game.turn_order.index(winner_conn)
-                    # advance to next (winner leads next)
-                    game.advance_turn()
+                    # DO NOT advance here; winner should be current and lead next trick.
 
                     # Check end of round (all cards played)
                     remaining = any(p.hand for p in game.players.values())
@@ -255,10 +278,60 @@ def handle_client(conn, addr):
                         broadcast("\nRound complete.".encode(), None)
                         # reset for next round
                         game.reset()
+
+                        # If the match is over, announce final standings.
+                        if getattr(game, 'match_over', False):
+                            try:
+                                broadcast("\nMATCH OVER! Final Scores:".encode(), None)
+                                # send each player's score
+                                for pconn, player in game.players.items():
+                                    try:
+                                        pconn.send(f"\n{player.name}: {player.score}".encode())
+                                    except Exception:
+                                        pass
+                            except Exception:
+                                pass
+                        else:
+                            # Auto-start next hand: deal, reveal trump, and enter BID phase
+                            try:
+                                game.start_game()
+                                hands = game.build_hands()
+
+                                # Announce max hand size for this session
+                                try:
+                                    broadcast(f"\nMax hand size for this match: {DEFAULT_MAX_HANDS}".encode(), None)
+                                except Exception:
+                                    pass
+
+                                # Reveal trump to all players before bidding
+                                if game.trump:
+                                    broadcast(f"\nTRUMP is {game.trump}".encode(), None)
+                                else:
+                                    broadcast("\nNO TRUMP this hand".encode(), None)
+
+                                broadcast("\nPlace your bid using '<BID> #'".encode(), None)
+                                game.BID_PHASE = True
+
+                                for player_conn, hand_msg in hands.items():
+                                    try:
+                                        player_conn.send(hand_msg.encode())
+                                    except Exception:
+                                        pass
+
+                                # Prompt first bidder and announce turn
+                                first_conn = game.get_current_player_conn()
+                                try:
+                                    first_conn.send("\nYour turn to bid. Type: '<BID> #'".encode())
+                                except Exception:
+                                    pass
+                                announce_current_turn()
+                            except Exception as e:
+                                print(f"[ERROR] Failed to auto-start next hand: {e}")
                     else:
                         # Notify next player to play
                         next_conn = game.get_current_player_conn()
                         next_conn.send("\nYour turn to PLAY. Type: '<PLAY> card'".encode())
+                        announce_current_turn()
 
             else:
                 conn.send("Invalid command.".encode())
