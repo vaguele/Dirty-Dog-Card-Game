@@ -2,6 +2,11 @@ from player import Player
 from deck import Deck
 import random
 
+# Change this value to adjust the default maximum hand size used by the
+# game. It's intentionally a single top-level constant so you can edit it
+# quickly when you want a different default during testing or play.
+DEFAULT_MAX_HANDS = 3
+
 class Game:
     def __init__(self):
         self.players = {}  # conn: Player -> hand
@@ -62,7 +67,12 @@ class Game:
         # the same number and one card remains to reveal trump.
         num_players = len(self.players)
         deck_size = len(self.deck.cards)
-        self.max_cards = (deck_size - 1) // num_players
+        computed_max = (deck_size - 1) // num_players if num_players > 0 else 0
+
+        # Cap the default computed max to a reasonable play limit. Change
+        # DEFAULT_MAX_HANDS at the top of this file to easily adjust the
+        # default behavior for future sessions.
+        self.max_cards = min(computed_max, DEFAULT_MAX_HANDS)
 
         self.deck.shuffle()
         self.deck.deal(list(self.players.values()), self.cards_per_player)

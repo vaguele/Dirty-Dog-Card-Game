@@ -1,4 +1,4 @@
-from game import Game
+from game import Game, DEFAULT_MAX_HANDS
 import socket
 import threading
 
@@ -85,6 +85,11 @@ def handle_client(conn, addr):
                     # Broadcast only the updated formatted player list (no separate text)
                     broadcast(format_player_list().encode(), None)
                     if all_ready:
+                        # Remind players of the max before starting
+                        try:
+                            broadcast(f"\nMax hand size for this match: {DEFAULT_MAX_HANDS}".encode(), None)
+                        except Exception:
+                            pass
                         broadcast("\nGAME STARTING!".encode(), None)
                         
                         game.start_game()
