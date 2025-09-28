@@ -24,7 +24,7 @@ game = Game()
 
 def format_player_list():
     """Return a nicely formatted list of current players with score and READY status."""
-    lines = ["Players in this game:"]
+    lines = [""]
     for i, conn in enumerate(game.players.keys(), start=1):
         p = game.players[conn]
         status = "[READY]" if conn in game.ready_players else "[NOT READY]"
