@@ -123,9 +123,9 @@ class Player:
         self.played_card = ""
         Player.total_bids = 0
 
-    def game_reset(self):
-        self.score = 0
-        self.tied = False
+    # Note: game_reset() was removed because game-wide resets are handled by
+    # the Game controller. Player state is reset per-round via round_reset().
+    # Keeping this comment preserves the rationale for historical reviewers.
 
     def __str__(self):
         return f"\n{self.name}"

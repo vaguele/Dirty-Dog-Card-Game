@@ -5,9 +5,10 @@ class Card:
     def __init__(self, suit, value):
         self.suit = suit
         self.value = value
-
-    def strength(self):
-        return Card.weight[self.value]
+        
+    # Note: a convenience `strength()` method was removed because callers in
+    # the codebase directly use Card.weight[self.value]. Removing the method
+    # avoids duplication while keeping `weight` as the single source of truth.
 
     def __str__(self):
         return f"{self.value}{self.suit}"

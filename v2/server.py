@@ -1,5 +1,3 @@
-from player import Player
-from deck import Deck
 from game import Game
 import socket
 import threading
@@ -14,9 +12,14 @@ server.bind((HOST, PORT))
 server.listen()
 print(f"[SERVER] Listening on {HOST}:{PORT}")
 
-deck = Deck()
 game = Game()
-MIN_PLAYERS = 2
+# Notes on cleanup:
+# - The Deck instance and Player import that used to be here were removed because
+#   the Game object is the authoritative owner of the deck and player objects.
+#   Creating a separate Deck() or importing Player here was redundant and led
+#   to duplicated state.
+# - MIN_PLAYERS constant was removed since the Game instance exposes its
+#   own `min_players` configuration and that single source of truth should be used.
 
 
 def format_player_list():
